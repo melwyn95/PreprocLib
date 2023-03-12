@@ -1,12 +1,22 @@
 (* Building a preprocessor for ML *)
-a
+
+(* Dependencies *)
+
+module Lexbuf = Utilities.Lexbuf
+module Std    = Utilities.Std
+
+(* Local dependencies *)
+
+module CLI      = Preprocessor.CLI
 module ParamsML = CLI.Make (ConfigML)
-module Main     = TopAPI.Make (ParamsML)
+module Main     = Preprocessor.TopAPI.Make (ParamsML)
+
+(* Entry point *)
 
 let run () =
   match Main.check_cli () with
     Main.Ok ->
-      let file   = Option.value Parameters.Options.input ~default:"" in
+      let file   = Option.value ParamsML.Options.input ~default:"" in
       let std, _ = Main.preprocess (Lexbuf.File file)
       in begin
            Printf.printf  "%s%!" (Std.string_of std.out);
