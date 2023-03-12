@@ -34,12 +34,11 @@ module type S =
   sig
     (* Preprocessing from various sources *)
 
-    val from_lexbuf    :        Lexing.lexbuf preprocessor
-    val from_channel   :        in_channel    preprocessor
-    val from_string    :        string        preprocessor
-    val from_raw_input : (file_path * string) preprocessor
-    val from_file      :        file_path     preprocessor
-    val from_buffer    :        Buffer.t      preprocessor
+    val from_lexbuf  : Lexing.lexbuf preprocessor
+    val from_channel : in_channel    preprocessor
+    val from_string  : string        preprocessor
+    val from_file    : file_path     preprocessor
+    val from_buffer  : Buffer.t      preprocessor
   end
 
 module Make (Config : Config.S) (Options : Options.S) =
@@ -414,9 +413,9 @@ let ident    = letter (letter | '_' | digit)*
 
 (* Comment delimiters *)
 
-let ocaml_block_comment_opening   = "(*"
-let ocaml_block_comment_closing   = "*)"
-let ocaml_line_comment_opening    = ""
+let ocaml_block_comment_opening = "(*"
+let ocaml_block_comment_closing = "*)"
+let ocaml_line_comment_opening  = ""
 
 let block_comment_opening = ocaml_block_comment_opening
 let block_comment_closing = ocaml_block_comment_closing
@@ -462,8 +461,7 @@ rule scan state = parse
     let state, quote = state#sync lexbuf in
     match Config.string with
       Some delimiter when delimiter = quote.Region.value ->
-        let state = in_string quote state lexbuf
-        in scan state lexbuf
+        scan (in_string quote state lexbuf) lexbuf
     | Some _ | None -> scan state lexbuf }
 
   (* Comments *)
@@ -645,20 +643,8 @@ and linemarker state = parse
       in from_lexbuf state lexbuf
 
     let from_channel = from_lexbuf <@ Lexing.from_channel
-
-    let from_string = from_lexbuf <@ Lexing.from_string
-
-    let from_raw_input =
-      fun (file, input) ->
-        try
-          (from_lexbuf <@ Lexing.from_string) input
-        with Sys_error msg ->
-          let error  = Error.Failed_opening (file, msg) in
-          let msg    = Error.to_string error in
-          let region = Region.min ~file in
-          Error (None, Region.{value=msg; region})
-
-    let from_buffer = from_string <@ Buffer.contents
+    let from_string  = from_lexbuf <@ Lexing.from_string
+    let from_buffer  = from_string <@ Buffer.contents
 
   end (* of functor [Make] *)
 

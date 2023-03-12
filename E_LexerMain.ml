@@ -6,10 +6,10 @@ module Pos    = SourceLoc.Pos
 
 (* Internal dependencies *)
 
-module E_Lexer  = Preprocessor.E_Lexer
-module E_Parser = Preprocessor.E_Parser
-module State    = Preprocessor.State
-module Error    = Preprocessor.Error
+module E_Lexer  = PreprocLib.E_Lexer
+module E_Parser = PreprocLib.E_Parser
+module State    = PreprocLib.State
+module Error    = PreprocLib.Error
 
 (* All exits *)
 

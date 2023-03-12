@@ -7,9 +7,9 @@ module Std    = Utilities.Std
 
 (* Local dependencies *)
 
-module CLI      = Preprocessor.CLI
+module CLI      = PreprocLib.CLI
 module ParamsML = CLI.Make (ConfigML)
-module Main     = Preprocessor.TopAPI.Make (ParamsML)
+module Main     = PreprocLib.TopAPI.Make (ParamsML)
 
 (* Entry point *)
 
