@@ -277,7 +277,7 @@ let to_lexeme = function
 
 | PP_Error (dir_region, msg_reg) ->
     let msg_str =
-      if String.(msg_reg.value = "") then ""
+      if msg_reg.value = "" then ""
       else " " ^ msg_reg.value in
     let value  = sprintf "#error%s" msg_str
     and region = Region.cover dir_region msg_reg.region

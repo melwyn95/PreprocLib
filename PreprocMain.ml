@@ -1,13 +1,13 @@
-module Parameters = CLI.Make (Config)
-module Main       = TopAPI.Make (Parameters)
-
-open Main
+(* Building a preprocessor for ML *)
+a
+module ParamsML = CLI.Make (ConfigML)
+module Main     = TopAPI.Make (ParamsML)
 
 let run () =
-  match check_cli () with
+  match Main.check_cli () with
     Main.Ok ->
       let file   = Option.value Parameters.Options.input ~default:"" in
-      let std, _ = preprocess (Lexbuf.File file)
+      let std, _ = Main.preprocess (Lexbuf.File file)
       in begin
            Printf.printf  "%s%!" (Std.string_of std.out);
            Printf.eprintf "%s%!" (Std.string_of std.err)

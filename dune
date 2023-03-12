@@ -45,3 +45,11 @@
           Version.ml
           (run "sh" "-c"
                "printf 'let version = \"%s\"' \"${LIGO_VERSION}\""))))
+
+;; Build of a standalone preprocessor
+
+(executable
+ (name PreprocMain)
+ (libraries
+    Preprocessor)
+ (modules ConfigML PreprocMain))

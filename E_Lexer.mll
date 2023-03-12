@@ -65,7 +65,7 @@ and comment opening acc state = parse
   nl | eof { let ()      = Lexbuf.rollback lexbuf in
              let value   = opening.Region.value ^ mk_string acc
              and start   = opening.Region.region#start in
-             let region  = Region.make start state#pos in
+             let region  = Region.make ~start ~stop:state#pos in
              let comment = Region.{region; value}
              in E_Parser.COMMENT (state, comment) }
 | _ as c   { let state, _ = state#sync lexbuf in
@@ -95,6 +95,7 @@ let string_of_token =
   | RPAR    args -> string_of "RPAR"    args
   | COMMENT args -> string_of "COMMENT" args
   | EOL     args -> string_of "EOL"     args
+  | EOF     args -> string_of "EOF"     args
 
 let state_of =
   let open E_Parser in
@@ -110,7 +111,8 @@ let state_of =
   | LPAR    (state, _)
   | RPAR    (state, _)
   | COMMENT (state, _)
-  | EOL     (state, _) -> state
+  | EOL     (state, _)
+  | EOF     (state, _) -> state
 
 let scan (state : State.t) =
   let last_state = ref state in

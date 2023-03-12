@@ -97,7 +97,7 @@ module Make (Config : Config.S) : PARAMETERS =
        error "Multiple inputs" for erased options. *)
 
     let anonymous arg =
-      if String.(arg <> "") then
+      if arg <> "" then
         match !input with
           None -> input := Some arg
         | Some _ -> raise (Getopt.Error "Multiple inputs.")

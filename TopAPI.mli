@@ -4,6 +4,8 @@
    the source as one value of type [Lexbuf.input]. By contrast,
    [LowAPI] exports a preprocessor for each type of input. *)
 
+[@@@warning "-67"] (* Warning broken in OCaml 5.0.0 *)
+
 (* Dependencies *)
 
 module Lexbuf = Utilities.Lexbuf

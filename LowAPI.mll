@@ -66,26 +66,12 @@ module Make (Config : Config.S) (Options : Options.S) =
        [dir]. If the file is not found, it is sought in the
        directories [Options.dirs] (from the CLI flag "-I"). *)
 
-    let find dir file inclusion_paths =
+    let find dir file =
       let path =
         if dir = "." || dir = "" then file
         else dir ^ "/" ^ file in
       if Sys.file_exists path then Some path
       else find_in_cli_paths file Options.dirs
-
-    (* STRING PROCESSING *)
-
-    (* The value of [mk_string p] ("make string") is a string
-       containing the characters in the list [p], in reverse
-       order. For instance, [mk_string ['c';'b';'a'] = "abc"]. *)
-
-    let mk_string (p : char list) : string =
-      let len   = List.length p in
-      let bytes = Bytes.make len ' ' in
-      let rec fill i = function
-             [] -> bytes
-      | char::l -> Bytes.set bytes i char; fill (i-1) l
-      in fill (len-1) p |> Bytes.to_string
 
     (* ERRORS *)
 
@@ -176,7 +162,7 @@ module Make (Config : Config.S) (Options : Options.S) =
                    value of the [state] (see [incl_chan] above). *)
 
             let incl_path, incl_chan, state =
-              match find path incl_file state#pos#file with
+              match find path incl_file with
                 None ->
                   fail state incl_region (Error.File_not_found incl_file)
               | Some incl_path ->
@@ -380,7 +366,7 @@ let error_action ~callback dir_region state lexbuf =
       let state = fst (state#newline lexbuf) in
       let state =
         if state#is_copy then
-          if String.(value = "") then
+          if value = "" then
             fail state dir_region (Error.Error_directive value)
           else
             fail state region (Error.Error_directive value)
@@ -403,7 +389,7 @@ let linemarker_action ~callback region linenum state lexbuf =
   let line_reg = Region.make ~start ~stop:region#stop in
   let linenum  = Region.{region=line_reg; value=linenum} in
   match Directive.scan_linemarker hash_pos linenum state lexbuf with
-    Ok (state, line_directive, dir, _) ->
+    Ok (state, _, dir, _) ->
       let dir   = Directive.to_lexeme dir in
       let ()    = state#print dir.Region.value in
       let ()    = state#copy_nl lexbuf in
@@ -475,7 +461,7 @@ rule scan state = parse
     state#copy lexbuf;
     let state, quote = state#sync lexbuf in
     match Config.string with
-      Some delimiter when String.(delimiter = quote.Region.value) ->
+      Some delimiter when delimiter = quote.Region.value ->
         let state = in_string quote state lexbuf
         in scan state lexbuf
     | Some _ | None -> scan state lexbuf }
@@ -484,8 +470,8 @@ rule scan state = parse
 
 | block_comment_opening {
     state#copy lexbuf;
-    let state, Region.{region; value} = state#sync lexbuf in
-    let lexeme = value in
+    let state, reg = state#sync lexbuf in
+    let lexeme = reg.Region.value in
     match Config.block with
       Some block when block#opening = lexeme ->
         let region = Region.from_lexbuf lexbuf in
@@ -495,8 +481,8 @@ rule scan state = parse
 
 | line_comment_opening {
     state#copy lexbuf;
-    let state, Region.{region; value} = state#sync lexbuf in
-    let lexeme = value in
+    let state, reg = state#sync lexbuf in
+    let lexeme = reg.Region.value in
     match Config.line with
       Some line when line = lexeme ->
         scan (in_line state lexbuf) lexbuf
@@ -544,7 +530,7 @@ and in_block block opening state = parse
     state#copy lexbuf;
     let lexeme = Lexing.lexeme lexbuf in
     match Config.string with
-      Some delimiter when String.(delimiter = lexeme) ->
+      Some delimiter when delimiter = lexeme ->
         let state, opening = state#sync lexbuf in
         let state  = in_string opening state lexbuf
         in in_block block opening.Region.region state lexbuf
@@ -553,7 +539,7 @@ and in_block block opening state = parse
 | block_comment_opening {
     state#copy lexbuf;
     let lexeme = Lexing.lexeme lexbuf in
-    if String.(block#opening = lexeme) then
+    if block#opening = lexeme then
       let state  = fst (state#sync lexbuf) in
       let region = Region.from_lexbuf lexbuf in
       let state  = in_block block region state lexbuf
@@ -563,7 +549,7 @@ and in_block block opening state = parse
 | block_comment_closing {
     state#copy lexbuf;
     let state, Region.{value; _} = state#sync lexbuf in
-    if String.(block#closing = value) then state
+    if block#closing = value then state
     else in_block block opening state lexbuf }
 
 | nl  { state#copy lexbuf;
@@ -588,7 +574,7 @@ and in_string opening state = parse
         state#copy lexbuf;
         let state, Region.{value; _} = state#sync lexbuf in
         match Config.string with
-          Some delimiter when String.(delimiter = value) -> state
+          Some delimiter when delimiter = value -> state
         | Some _ | None -> in_string opening state lexbuf }
 | nl  { fail state opening.Region.region Error.Newline_in_string }
 | eof { Error.Unterminated_string opening.Region.value

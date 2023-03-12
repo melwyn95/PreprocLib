@@ -55,8 +55,8 @@ let rec eval env =
   function
     Or  {value=e1,e2; _} -> eval env e1 || eval env e2
   | And {value=e1,e2; _} -> eval env e1 && eval env e2
-  | Eq  {value=e1,e2; _} -> Bool.(eval env e1 = eval env e2)
-  | Neq {value=e1,e2; _} -> Bool.(eval env e1 != eval env e2)
+  | Eq  {value=e1,e2; _} -> eval env e1 = eval env e2
+  | Neq {value=e1,e2; _} -> eval env e1 != eval env e2
   | Not {value=e; _}     -> not (eval env e)
   | True  _              -> true
   | False _              -> false

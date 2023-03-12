@@ -25,6 +25,8 @@
    locations on the file system. In case of an error, we return the
    preprocessed buffer so far, if any, and an error message. *)
 
+[@@@warning "-67"] (* Warning broken in OCaml 5.0.0 *)
+
 (* Dependencies *)
 
 module Region = SourceLoc.Region

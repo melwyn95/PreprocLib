@@ -2,7 +2,7 @@
    directives *)
 
 module Region = SourceLoc.Region
-module Pos    = SourcLoc.Pos
+module Pos    = SourceLoc.Pos
 
 (* Internal dependencies *)
 

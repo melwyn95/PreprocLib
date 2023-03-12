@@ -3,148 +3,7 @@
 A preprocessor is a tool that reads a text file and, if some special
 instructions, called _preprocessing directives_, are found in the
 input, the output may not be an identical copy, for example some parts
-can be skipped. We document here the preprocessor shipped with the
-LIGO compiler.
-
-## Contents
-
-This directory is located in the `vendors` directory of the repository
-of LIGO, here `ligo/vendors`. As such, it is distributed with the LIGO
-compiler which uses it as a library. Nevertheless, a standalone
-preprocessor can also be built and used either as an interactive way
-to test the library, or for uses independent of LIGO. The directory
-`ligo/vendored-dune/Preprocessor` should list the following files:
-
-```
-Preprocessor
-├── API.mli
-├── API.mll
-├── CLI.ml
-├── CLI.mli
-├── dune
-├── dune-project
-├── E_AST.ml
-├── E_LexerMain.ml
-├── E_Lexer.mli
-├── E_Lexer.mll
-├── E_ParserMain.ml
-├── E_Parser.mly
-├── Error.ml
-├── Error.mli
-├── LICENSE
-├── Makefile.cfg
-├── Preprocessor.opam
-├── PreprocMainGen.ml
-├── PreprocMainGen.mli
-├── PreprocMain.ml
-├── README.md
-├── State.ml
-├── State.mli
-└── Tests
-     ├── ...
-     ...
-```
-
-Here is a short description of those files:
-
-- The OCaml module `API` is the heart of the preprocessor.
-
-- The modules whose names start with `E_` are used by `API` to parse
-  the boolean expression of conditional directives `#if` and
-  `#elif`.
-
-- The module `Error` defines the errors that the preprocessor may
-  emit.
-
-- The `LICENSE` file must contain the MIT license.
-
-- The modules `CLI` and `PreprocMainGen` deal with command-line
-  options for the standalone preprocessor, and also export data
-  structures about the configuration meant for the library client,
-  for example, the LIGO compiler.
-
-- The module `PreprocMain` is the standalone preprocessor.
-
-- The directory `Tests` is used for unit tests of the standalone
-  preprocessor.
-
-- The file `README.md` is the present file.
-
-- The module `State` defines a type and related functions used for
-  preprocessing.
-
-The following files are meant to be used only by a special Makefile to
-build the standalone preprocessor. See
-[how to build with the Makefile](#the-standalone-preprocessor-with-make).
-
-- Hidden files prefixed by `.`.
-
-- The file `Makefile.cfg` configures the Makefile.
-
-## Builds
-
-### The Preprocessor as a Library
-
-The relevant files are `dune` and `dune-project`. The shell command
-
-        $ dune build Preprocessor.a
-
-is to be run in the directory `ligo/vendored-dune/Preprocessor`.
-
-### The Standalone Preprocessor with dune
-
-The relevant files are `dune` and `dune-project`. The shell command
-
-        $ dune build PreprocMain.exe
-
-is to be run in the directory `ligo/vendored-dune/Preprocessor`. As usual
-with `dune`, the executable is found in the mirror directory tree
-`ligo/_build/default/vendored-dune/Preprocessor`.
-
-### The Standalone Preprocessor with Make
-
-It is possible to build the standalone preprocessor with a Makefile
-instead of `dune`, in which case you need to clone the following `git`
-repositories first, outside the LIGO working directory:
-
-> $ git clone https://github.com/rinderknecht/Scripts.git
-
-> $ git clone https://github.com/rinderknecht/OCaml-build.git
-
-Make sure the directory to the scripts is in your `PATH` shell
-variable. Then, back in `ligo/vendored-dune/Preprocessor`, run
-
-> $ setup.sh
-
-which should create symbolic links or report some errors. Running
-
-> $ make conf
-
-should at least find `ocamlc`, `ocamldep`, `menhir`, `grep`, `sed` and
-`arch`. If not, install them.
-
-Then run
-
-> $ make sync
-
-> $ make
-
-which is expected to build `PreprocMain.byte` in the directory
-`./_x86_64/`, whose name is made by prefixing with `_` the result of
-the output of the shell command
-
-> $ uname --machine
-
-Note: the Makefile relies on the `opam` database installed by
-previously running
-
-> $ make
-
-at the root of the LIGO working directory `ligo`, or, at least,
-
-> $ install_vendors_deps.sh
-
-in `ligo/scripts`.
+can be skipped. We document here the preprocessor.
 
 ## The Standalone Preprocessor
 
@@ -194,9 +53,7 @@ This preprocessor features different kinds of directives:
   `C#`;
 
 - a directive from `cpp`, the `C` preprocessor, enabling the textual
-  inclusion of files;
-
-- a directive specific to LIGO to support a minimal module system.
+  inclusion of files.
 
 Importantly, [strings](#preprocessing-strings-and-comments) are
 handled the way `cpp` does, not `C#`.
@@ -385,8 +242,8 @@ enables a shortcut by means of the `#elif` directive, like so:
 Basically, a `#elif` directive is equivalent to `#else` followed by
 `#if`, but we only need to close with only one `#endif`.
 
-The rationale for using conditional directives in LIGO is to enable in
-a single smart contract several versions of a standard.
+The rationale for using conditional directives is to enable in a
+single file several versions of a standard.
 
 ```
 #if STANDARD_1
@@ -499,22 +356,16 @@ included file. For example, `# 3 "Tests/b.txt" 2` means that the next
 line has number `3` and we return to file `Tests/b.txt`.
 
 Linemarkers need to be handled by the consumer of the output. In the
-context of the LIGO compiler, the lexer reads the output of the
-preprocessor, therefore scans for linemarkers.
+context of a compiler, the lexer reads the output of the preprocessor,
+therefore scans for linemarkers.
 
-When using the preprocessor with the LIGO compiler, the `#include`
-directive can only occur at the top level according to the grammar,
-that is, either at the beginning of the smart contract, in between
-file-level declarations or at the end. (This property is checked by
-the parser.) The rationale for this restriction is to avoid fragments
-of smart contracts that are syntactically incorrect, and yet assembled
-into a correct one.
-
-### The Import Directive
-
-The `#import` directive is specific to the LIGO compiler. It provides
-the support for a
-[minimal module system](https://ligolang.org/docs/language-basics/modules#modules-and-imports-build-system).
+When using the preprocessor with a compiler, the `#include` directive
+should only occur at the top level according to the grammar, that is,
+either at the beginning of the input file, in between file-level
+declarations or at the end. (This property is checked by the parser.)
+The rationale for this restriction is to avoid fragments of input
+files that are syntactically incorrect, and yet assembled into a
+correct one.
 
 ## Preprocessing Strings and Comments
 
@@ -578,8 +429,7 @@ for new combinations.
 As we explained in section [Contents](#contents), the module `CLI` has
 a twofold purpose: to deal with command-line options for the
 standalone preprocessor, and also export data structures about the
-configuration meant for the library client, for example, the LIGO
-compiler.
+configuration meant for the library client.
 
 #### The Interface (CLI)
 
@@ -733,8 +583,8 @@ Clearly, the type parameter `'src` is the kind of input. The type
 and how the preprocessor is parameterised by the user. See section
 [The State](#the-state). It could be that this information comes from
 the module `CLI` if building the standalone preprocessor, but it could
-come from the LIGO compiler, which uses the preprocessor as a library
-and has its own command-line interface. The type `result` is
+come from a compiler, which uses the preprocessor as a library and has
+its own command-line interface. The type `result` is
 
 ```
 type result = (success, Buffer.t option * message) Stdlib.result
@@ -1126,7 +976,7 @@ of signature `S` in `CLI` and returns a signature
 
 This signature packages the command-line options as defined by the
 module `CLI` into an `API` version, both suitable for the standalone
-preprocessor, and also for any library client, for example, the LIGO
+preprocessor, and also for any library client, for example, a
 compiler. This signature also provides two ready-made functions
 `check_cli` and `preprocess` to check the command-line options and run
 the preprocessor (on the input specified in the argument `CLI`),

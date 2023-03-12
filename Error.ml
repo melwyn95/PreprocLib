@@ -66,8 +66,7 @@ let to_string = function
 | Missing_space ->
     sprintf "At least a space character is expected."
 | Error_directive msg ->
-    if String.(msg = "") then sprintf "Directive #error reached."
-    else msg
+    if msg = "" then sprintf "Directive #error reached." else msg
 | Parse_error ->
     "Parse error in Boolean expression."
 | Invalid_symbol ->

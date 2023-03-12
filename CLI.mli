@@ -1,5 +1,7 @@
 (* Command-Line Interface (CLI) *)
 
+[@@@warning "-67"] (* Warning broken in OCaml 5.0.0 *)
+
 (* Configuration, options and the parsing status of the latter *)
 
 module type PARAMETERS =

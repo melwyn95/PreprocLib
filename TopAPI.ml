@@ -63,7 +63,7 @@ module Make (Parameters : CLI.PARAMETERS) =
               ~offsets:Options.offsets
               `Point
           in Printf.sprintf "%s:\n%s" header value
-      | Some file ->
+      | Some _ ->
           Printf.sprintf "%s%s"
             (Format.asprintf "%a" (Snippet.print ~no_colour) region)
             (Std.redden value)
@@ -92,7 +92,8 @@ module Make (Parameters : CLI.PARAMETERS) =
     let preprocess input : Std.t * LowAPI.result =
       match Lexbuf.from_input input with
         Ok (lexbuf, close) ->
-          let preprocessed = Scan.from_lexbuf lexbuf
-          in log preprocessed, preprocessed
+          let preprocessed = Scan.from_lexbuf lexbuf in
+          let () = close () in
+          log preprocessed, preprocessed
       | Error msg -> Std.empty, Error (None, msg)
   end
