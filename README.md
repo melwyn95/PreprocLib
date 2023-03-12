@@ -7,10 +7,9 @@ can be skipped. We document here the preprocessor.
 
 ## The Standalone Preprocessor
 
-Let us assume here that the standalone preprocessor has been [built
-with `dune`](#the-standalone-preprocessor-with-dune), therefore the
-executable is `PreprocMain.exe`. We can obtain the available
-command-line options like so:
+Let us assume here that the standalone preprocessor has been built
+with `dune`, therefore the executable is `PreprocMain.exe`. We can
+obtain the available command-line options like so:
 
     $ PreprocMain.exe --help
 
