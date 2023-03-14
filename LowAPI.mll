@@ -63,14 +63,25 @@ module Make (Config : Config.S) (Options : Options.S) =
 
     (* The call [find dir file inclusion_paths] looks for [file] in
        [dir]. If the file is not found, it is sought in the
-       directories [Options.dirs] (from the CLI flag "-I"). *)
+       directories [Options.dirs] (from the CLI flag "-I"). If the
+       file is still not found, we try to search for the file using
+       the [inclusion_paths] with the help of module [ModRes]. *)
 
-    let find dir file =
+    let find dir file inclusion_paths =
       let path =
         if dir = "." || dir = "" then file
         else dir ^ "/" ^ file in
       if Sys.file_exists path then Some path
-      else find_in_cli_paths file Options.dirs
+      else
+        match find_in_cli_paths file Options.dirs with
+          Some _ as some -> some
+        | None ->
+            let file_opt =
+                ModRes.find_external_file ~file ~inclusion_paths
+            in match file_opt with
+                 None -> None
+               | Some file ->
+                   if Sys.file_exists file then file_opt else None
 
     (* ERRORS *)
 
@@ -138,6 +149,12 @@ module Make (Config : Config.S) (Options : Options.S) =
 
             let path = state#incl in
 
+            (* We resolve the file names to be included. *)
+
+            let external_dirs =
+              let file = state#pos#file in
+              ModRes.get_dependencies ~file state#mod_res in
+
             (* We try to find the file to include. If missing, the
                exception [Error] is raised, with the value
                [Error.File_not_found]. Otherwise, we obtain a triple
@@ -161,7 +178,7 @@ module Make (Config : Config.S) (Options : Options.S) =
                    value of the [state] (see [incl_chan] above). *)
 
             let incl_path, incl_chan, state =
-              match find path incl_file with
+              match find path incl_file external_dirs with
                 None ->
                   fail state incl_region (Error.File_not_found incl_file)
               | Some incl_path ->
@@ -173,10 +190,8 @@ module Make (Config : Config.S) (Options : Options.S) =
                     Error.Failed_opening (incl_path, msg)
                     |> fail state incl_region in
 
-            (* We check if the current file exists in the stack of
-               ancestors in which case we fail with the error
-               [Error.Cyclic_inclusion]. *)
-
+            (* We check if the current file exists in the stack of ancestors
+               in which case we fail with the error [Error.Cyclic_inclusion] *)
             let () =
               if List.exists (String.equal state#pos#file) state#ancestors
               then

@@ -4,13 +4,14 @@ version      : "1.0"
 synopsis     : "A library for a C#-like preprocessor"
 description  : "The following C# preprocessing directives are supported: #define,  #elif, #else, #endif, #error, #if, #include and #undef."
 maintainer   : "rinderknecht@free.fr"
-authors      : "Christian Rinderknecht"
+authors      : ["Christian Rinderknecht" "Melwyn Saldanha"]
 license      : "MIT"
 homepage     : "https://github.com/rinderknecht/Preprocessor"
 bug-reports  : "https://gitlab.com/rinderknecht/Preprocessor/issues"
 dev-repo     : "git+https://github.com/rinderknecht/Preprocessor.git"
 # If you change the dependencies, run `opam lock` in the root
-depends      : ["dune" "menhir" "fpath" "SourceLoc" "Utilities" "GetoptLib"]
+depends      : ["dune" "menhir" "uutf"
+                "SourceLoc" "Utilities" "GetoptLib"]
 build        : [["dune" "build" "-p" name]]
 pin-depends  : [
   ["SourceLoc.1.0"

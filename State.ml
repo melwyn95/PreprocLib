@@ -22,7 +22,9 @@ type file_path = string
 type module_name = string
 type lexeme = string
 
-class t ?(init_env : Env.t option) (pos' : Pos.t) =
+class t ?(project_root : file_path option)
+        ?(init_env : Env.t option)
+        (pos' : Pos.t) =
   object (self)
     val pos = pos'
     method pos = pos
@@ -127,4 +129,9 @@ class t ?(init_env : Env.t option) (pos' : Pos.t) =
 
     method set_chans chans   = {< chans >}
     method push_chan in_chan = {< chans = in_chan :: chans >}
+
+    (* PATH RESOLUTION *)
+
+    val mod_res = Option.bind project_root ModRes.make
+    method mod_res = mod_res
   end

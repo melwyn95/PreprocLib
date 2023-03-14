@@ -34,6 +34,8 @@ module Make (Config : Config.S) : PARAMETERS =
 
     let add_def = add_elem
 
+    let set_path project_root path = project_root := Some path
+
     let make_help () : Buffer.t =
       let file   = Filename.basename Sys.argv.(0) in
       let buffer = Buffer.create 203 in
@@ -43,14 +45,15 @@ module Make (Config : Config.S) : PARAMETERS =
                  and each <option> (if any) is one of the following:\n"
                 file
       and options = [
-        "  -I <paths>       Inclusion paths (colon-separated)";
-        "  -D <symbols>     Predefined symbols (colon-separated)";
-        "  -h, --help       This help";
-        "  -v, --version    Commit hash on stdout";
-        "      --cli        Print given options (debug)";
-        "      --columns    Columns for source locations";
-        "      --show-pp    Print result of preprocessing";
-        "      --no-colour  Disable coloured printing on stdout"
+        "  -I <paths>         Inclusion paths (colon-separated)";
+        "  -D <symbols>       Predefined symbols (colon-separated)";
+        "  -h, --help         This help";
+        "  -v, --version      Commit hash on stdout";
+        "      --cli          Print given options (debug)";
+        "      --columns      Columns for source locations";
+        "      --show-pp      Print result of preprocessing";
+        "      --no-colour    Disable coloured printing on stdout";
+        "      --project-root Path to the root of the project"
       ] in
       begin
         Buffer.add_string buffer header;
@@ -65,6 +68,7 @@ module Make (Config : Config.S) : PARAMETERS =
     and dirs         = ref []
     and define       = ref []
 
+    and project_root = ref None
     and columns      = ref false
     and show_pp      = ref false
     and no_colour    = ref false
@@ -86,9 +90,10 @@ module Make (Config : Config.S) : PARAMETERS =
         noshort, "show-pp",      set show_pp true,   None;
         noshort, "no-colour",    set no_colour true, None;
 
-        noshort, "cli",          set cli true,       None;
-        'h',     "help",         set help true,      None;
-        'v',     "version",      set version true,   None
+        noshort, "cli",          set cli true,     None;
+        'h',     "help",         set help true,    None;
+        'v',     "version",      set version true, None;
+        noshort, "project-root", None, Some (set_path project_root)
       ]
 
     (* Handler of anonymous arguments.
@@ -143,6 +148,7 @@ module Make (Config : Config.S) : PARAMETERS =
       empty
       |> add "-I"
       |> add "-D"
+      |> add "--project-root"
 
     let argv_copy = Array.copy Sys.argv
 
@@ -171,13 +177,14 @@ module Make (Config : Config.S) : PARAMETERS =
 
     (* Re-exporting immutable fields with their CLI value *)
 
-    let dirs      = !dirs
-    and define    = !define
-    and offsets   = not !columns
-    and show_pp   = !show_pp
-    and no_colour = !no_colour
-    and help      = !help
-    and version   = !version
+    let dirs         = !dirs
+    and define       = !define
+    and project_root = !project_root
+    and offsets      = not !columns
+    and show_pp      = !show_pp
+    and no_colour    = !no_colour
+    and help         = !help
+    and version      = !version
 
     (* Optional arguments *)
 
@@ -185,7 +192,8 @@ module Make (Config : Config.S) : PARAMETERS =
       None   -> "None"
     | Some x -> sprintf "Some %S" (convert x)
 
-    let string_of_input = string_of_opt (fun x -> x) !input
+    let string_of_input        = string_of_opt (fun x -> x) !input
+    let string_of_project_root = string_of_opt (fun x -> x) project_root
 
     (* Lists *)
 
@@ -202,12 +210,13 @@ module Make (Config : Config.S) : PARAMETERS =
          the spacing before "=" in order to align with further passes
          if used in a compiler front-end. *)
       let options = [
-        sprintf "input     = %s" string_of_input;
-        sprintf "dirs      = %s" string_of_dirs;
-        sprintf "define    = %s" string_of_define;
-        sprintf "show-pp   = %b" show_pp;
-        sprintf "no-colour = %b" no_colour;
-        sprintf "columns   = %b" (not offsets)
+        sprintf "input        = %s" string_of_input;
+        sprintf "dirs         = %s" string_of_dirs;
+        sprintf "define       = %s" string_of_define;
+        sprintf "show-pp      = %b" show_pp;
+        sprintf "no-colour    = %b" no_colour;
+        sprintf "columns      = %b" (not offsets);
+        sprintf "project-root = %s" string_of_project_root
       ] in
     begin
       Buffer.add_string buffer (String.concat "\n" options);
@@ -250,6 +259,7 @@ module Make (Config : Config.S) : PARAMETERS =
         let input        = input
         and dirs         = dirs
         and define       = define
+        and project_root = project_root
         and show_pp      = show_pp
         and no_colour    = no_colour
         and offsets      = offsets

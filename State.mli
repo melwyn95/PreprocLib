@@ -61,7 +61,8 @@ type file_path = string
 type module_name = string
 type lexeme = string
 
-class t : ?init_env:Env.t -> Pos.t ->
+class t :
+  ?project_root:file_path -> ?init_env:Env.t -> Pos.t ->
   object ('state)
     method pos     : Pos.t
     method set_pos : Pos.t -> 'state
@@ -142,4 +143,8 @@ class t : ?init_env:Env.t -> Pos.t ->
 
     method set_chans : in_channel list -> 'state
     method push_chan : in_channel -> 'state
+
+  (* PATH RESOLUTION *)
+
+    method mod_res : ModRes.t option
   end
