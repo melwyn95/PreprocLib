@@ -10,7 +10,7 @@ homepage     : "https://github.com/rinderknecht/Preprocessor"
 bug-reports  : "https://gitlab.com/rinderknecht/Preprocessor/issues"
 dev-repo     : "git+https://github.com/rinderknecht/Preprocessor.git"
 # If you change the dependencies, run `opam lock` in the root
-depends      : ["dune" "menhir" "uutf"
+depends      : ["dune" "menhir" "uutf" "fpath"
                 "SourceLoc" "Utilities" "GetoptLib"]
 build        : [["dune" "build" "-p" name]]
 pin-depends  : [

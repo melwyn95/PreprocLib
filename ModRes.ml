@@ -24,7 +24,9 @@ type dependency_path = Path of string
 
 let equal_paths (Path p1) (Path p2) = (p1 = p2)
 
-(* TODO Explain the following types. *)
+(* [resolution] is an associative list where the key [dependency_path] of 
+   a package and the value is a list of [dependency_path]'s which are it's 
+   dependencies *)
 
 type resolution = dependency_path * dependency_path list
 
@@ -46,10 +48,7 @@ module PackageOrd =
 
 module PackageMap = Map.Make (PackageOrd)
 
-(* TODO Explain the following types. *)
-
-type dependency_map   = package list    PackageMap.t
-type installation_map = dependency_path PackageMap.t
+(* [lock_file] represents the structure of the lock that esy generates *)
 
 type lock_file = {
   root : package;
@@ -177,9 +176,8 @@ module Path =
        are equal *)
 
     let equal p1 p2 =
-      match p1, p2 with
-        Some p1, Some p2 ->
-          Fpath.equal (Fpath.normalize p1) (Fpath.normalize p2)
+      match normalize p1, normalize p2 with
+        Some p1, Some p2 -> Fpath.equal p1 p2
       | _ -> false
 
     (* The predicate [is_root] checks in the given path is the root
@@ -429,7 +427,7 @@ let find_dependencies (lock_file : lock_file) : package list PackageMap.t =
    "installation.json" and the lock file using the functions
    [find_dependencies] and [resolve_paths]. *)
 
-let make project_root : t option =
+let make ~project_root : t option =
   let  abs_path_to_project_root = Path.get_absolute_path project_root in
   let* abs_path_to_project_root =
     Path.to_string abs_path_to_project_root in
@@ -507,8 +505,8 @@ let get_main_field_from_manifest directory =
   let* manifest      = JsonHelpers.from_file_opt ligo_manifest in
   let  main = Util.member "main" manifest in
   match main with
-    `Null -> None
-  | `String f -> Some (Path.join directory f)
+    `String f -> Some (Path.join directory f)
+  | _ -> None
 
 (* The call [find_external_file ~file ~inclusion_paths] specifically
    resolves files for LIGO packages downloaded via esy.
@@ -539,33 +537,19 @@ let find_external_file ~file ~inclusion_paths =
   let* segs = Path.segs (Path.v file) in
   let* segs =
     match segs with
-      [scope; pkg_name] when scope <> "" && scope.[0] = '@' ->
-        let* scope     = drop_first_char_opt scope in
-        let* Path dir  = find_package_root_dir ~scope pkg_name in
-        let* main_file = get_main_field_from_manifest dir in
-        Some main_file
-    | [pkg_name] ->
-        let* Path dir  = find_package_root_dir pkg_name in
-        let* main_file = get_main_field_from_manifest dir in
-        Some main_file
-    | scope :: pkg_name :: rest_of_path when scope <> "" && scope.[0] = '@' ->
+      scope :: pkg_name :: rest_of_path when scope <> "" && scope.[0] = '@' ->
         let* scope       = drop_first_char_opt scope in
         let* Path dir    = find_package_root_dir ~scope pkg_name in
-        if rest_of_path = [] then get_main_field_from_manifest dir
+        if rest_of_path = [] 
+        then get_main_field_from_manifest dir
         else let rest_of_path = String.concat "/" rest_of_path
              in Some (Path.join dir rest_of_path)
-
-
-       (* scoped npm packages are of the form `@scope/pkg` *)
-        let* scope       = drop_first_char_opt scope in
-        let* Path dir    = find_package_root_dir ~scope pkg_name in
-        let rest_of_path = String.concat "/" rest_of_path
-        in Some (Path.join dir rest_of_path)
-
     | pkg_name :: rest_of_path ->
         let* Path dir    = find_package_root_dir pkg_name in
-        let rest_of_path = String.concat "/" rest_of_path
-        in Some (Path.join dir rest_of_path)
+        if rest_of_path = []
+        then get_main_field_from_manifest dir
+        else let rest_of_path = String.concat "/" rest_of_path
+             in Some (Path.join dir rest_of_path)
     | _ -> None
   in Some segs
 
@@ -576,8 +560,8 @@ let print ppf (mod_res : t) =
   let Path root_path = root_path in
   let () = Format.fprintf ppf "Root path   = %s\n" root_path in
   let () = Format.fprintf ppf "Resolutions =\n" in
-  let path_fmt (Path p) = Format.fprintf ppf "\t%s\n" p in
-  let pp_inclusion_paths ppf is = List.iter path_fmt is in
+  let path_fmt ppf (Path p) = Format.fprintf ppf "\t%s\n" p in
+  let pp_inclusion_paths ppf is = List.iter (path_fmt ppf) is in
   let resolution_fmt (Path k, v) =
     Format.fprintf ppf "%s = [\n%a\n]\n" k pp_inclusion_paths v
   in List.iter resolution_fmt resolutions

@@ -132,6 +132,7 @@ class t ?(project_root : file_path option)
 
     (* PATH RESOLUTION *)
 
-    val mod_res = Option.bind project_root ModRes.make
+    val mod_res = Option.bind project_root 
+      (fun project_root -> ModRes.make ~project_root)
     method mod_res = mod_res
   end

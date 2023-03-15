@@ -6,7 +6,7 @@ type dependency_path = Path of string
 
 val equal_paths : dependency_path -> dependency_path -> bool
 
-val make : string -> t option (* The parameter is the project root. *)
+val make : project_root:string -> t option
 
 val get_root_dependencies :
   t option -> dependency_path list
